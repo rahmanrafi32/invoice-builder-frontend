@@ -19,10 +19,17 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import { MonthPicker } from "@/components/invoice/DatePicker.tsx";
-import { X, Download, Eye, Trash2 } from "lucide-react";
+import { X, Download, Eye, Trash2, Loader2, Filter } from "lucide-react";
+import months from "@/utils/months.ts";
 
 export function InvoiceTable() {
     const queryClient = useQueryClient();
@@ -30,13 +37,28 @@ export function InvoiceTable() {
     const [page, setPage] = useState(1);
     const [searchInput, setSearchInput] = useState("");
     const [search, setSearch] = useState("");
-    const [selectedMonth, setSelectedMonth] = useState<Date | undefined>(undefined);
+    const [tempMonth, setTempMonth] = useState<string>("");
+    const [tempYear, setTempYear] = useState<string>("");
+    const [appliedMonth, setAppliedMonth] = useState<string>("");
+    const [appliedYear, setAppliedYear] = useState<string>("");
+
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
-    const limit = 5;
+    const limit = 10;
 
-    // 🔥 Debounce search
+    const currentYear = new Date().getFullYear();
+    const years = Array.from(
+        { length: currentYear - 2025 + 1 },
+        (_, i) => (2025 + i).toString()
+    );
+
+    const currentMonth = new Date().getMonth() + 1;
+
+    const availableMonths = tempYear === currentYear.toString()
+        ? months.filter((m) => parseInt(m.value) <= currentMonth)
+        : months;
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setPage(1);
@@ -46,24 +68,38 @@ export function InvoiceTable() {
         return () => clearTimeout(timer);
     }, [searchInput]);
 
-    // Convert selected month to string format for API queries
-    const month = selectedMonth ? dayjs(selectedMonth).format("YYYY-MM") : "";
+    const handleYearChange = (year: string) => {
+        setTempYear(year);
+        // If switching to current year and selected month is in future, clear it
+        if (year === currentYear.toString() && tempMonth) {
+            if (parseInt(tempMonth) > currentMonth) {
+                setTempMonth("");
+            }
+        }
+    };
 
-    // Reset page when month changes
-    useEffect(() => {
-        setPage(1);
-    }, [selectedMonth]);
+    const month = appliedMonth && appliedYear
+        ? `${appliedYear}-${appliedMonth}`
+        : "";
 
-    // Reset all filters
-    const handleReset = () => {
-        setSearchInput("");
-        setSearch("");
-        setSelectedMonth(undefined);
+    const handleApplyFilter = () => {
+        setAppliedMonth(tempMonth);
+        setAppliedYear(tempYear);
         setPage(1);
     };
 
-    // Check if any filters are active
-    const hasActiveFilters = searchInput !== "" || selectedMonth !== undefined;
+    const handleReset = () => {
+        setSearchInput("");
+        setSearch("");
+        setTempMonth("");
+        setTempYear("");
+        setAppliedMonth("");
+        setAppliedYear("");
+        setPage(1);
+    };
+
+    const hasActiveFilters = searchInput !== "" || appliedMonth !== "" || appliedYear !== "";
+    const canApplyFilter = tempYear !== "" && (tempMonth !== appliedMonth || tempYear !== appliedYear);
 
     const { data, isFetching } = useQuery<InvoiceResponse>({
         queryKey: ["invoices", page, search, month],
@@ -93,51 +129,99 @@ export function InvoiceTable() {
         Math.ceil((data?.total || 0) / limit)
     );
 
-    // Adjust page if it exceeds totalPages
-    useEffect(() => {
-        if (page > totalPages && totalPages > 0) {
-            setPage(totalPages);
-        }
-    }, [page, totalPages]);
+    const safePage = page > totalPages && totalPages > 0 ? totalPages : page;
+    if (safePage !== page && totalPages > 0) {
+        Promise.resolve().then(() => setPage(safePage));
+    }
 
     return (
         <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <Input
-                    placeholder="Search by client..."
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    className="flex-1 text-sm sm:text-base"
-                />
+            <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <Input
+                        placeholder="Search by client..."
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        className="flex-1 text-sm sm:text-base"
+                    />
 
-                <MonthPicker
-                    value={selectedMonth}
-                    onChange={setSelectedMonth}
-                    placeholder="Pick a month"
-                    className="w-full sm:w-[240px]"
-                />
+                    <Select value={tempYear} onValueChange={handleYearChange}>
+                        <SelectTrigger className="w-full sm:w-40">
+                            <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {years.map((year) => (
+                                <SelectItem key={year} value={year}>
+                                    {year}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
-                {hasActiveFilters && (
-                    <Button
-                        variant="outline"
-                        onClick={handleReset}
-                        className="gap-2 text-sm sm:text-base"
+                    <Select
+                        value={tempMonth}
+                        onValueChange={setTempMonth}
+                        disabled={!tempYear}
                     >
-                        <X className="h-4 w-4" />
-                        <span className="hidden sm:inline">Reset</span>
+                        <SelectTrigger className="w-full sm:w-40">
+                            <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableMonths.map((month) => (
+                                <SelectItem key={month.value} value={month.value}>
+                                    {month.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Button
+                        onClick={handleApplyFilter}
+                        disabled={!canApplyFilter}
+                        className="gap-2 text-sm sm:text-base w-full sm:w-auto"
+                    >
+                        <Filter className="h-4 w-4" />
+                        Apply Filter
                     </Button>
+
+                    {hasActiveFilters && (
+                        <Button
+                            variant="outline"
+                            onClick={handleReset}
+                            className="gap-2 text-sm sm:text-base w-full sm:w-auto"
+                        >
+                            <X className="h-4 w-4" />
+                            Reset
+                        </Button>
+                    )}
+                </div>
+
+                {/* Active Filter Badge */}
+                {(appliedMonth || appliedYear) && (
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <span>Filtered by:</span>
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-md">
+                            {appliedYear && appliedMonth
+                                ? `${months.find(m => m.value === appliedMonth)?.label} ${appliedYear}`
+                                : appliedYear}
+                        </span>
+                    </div>
                 )}
             </div>
 
+            {/* Loading Spinner Overlay */}
+            {isFetching && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Loading invoices...</p>
+                    </div>
+                </div>
+            )}
+
             {/* Desktop Table */}
             <div className="hidden lg:block rounded-xl border overflow-hidden relative">
-                {isFetching && (
-                    <div className="absolute top-2 right-4 text-xs text-muted-foreground">
-                        Updating...
-                    </div>
-                )}
-
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -218,12 +302,6 @@ export function InvoiceTable() {
 
             {/* Mobile/Tablet Cards */}
             <div className="lg:hidden space-y-3 sm:space-y-4">
-                {isFetching && (
-                    <div className="text-xs text-muted-foreground text-center py-2">
-                        Updating...
-                    </div>
-                )}
-
                 {data?.data?.length ? (
                     data.data.map((invoice) => (
                         <div
@@ -271,7 +349,7 @@ export function InvoiceTable() {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => setPreviewUrl(invoice.pdfPreviewUrl)}
-                                    className="flex-1 min-w-[100px] gap-1 text-xs sm:text-sm"
+                                    className="flex-1 min-w-25 gap-1 text-xs sm:text-sm"
                                 >
                                     <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                                     Preview
@@ -279,7 +357,7 @@ export function InvoiceTable() {
                                 <Button
                                     size="sm"
                                     onClick={() => window.open(invoice.pdfDownloadUrl, "_blank")}
-                                    className="flex-1 min-w-[100px] gap-1 text-xs sm:text-sm"
+                                    className="flex-1 min-w-25 gap-1 text-xs sm:text-sm"
                                 >
                                     <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                                     Download
