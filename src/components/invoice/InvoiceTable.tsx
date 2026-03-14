@@ -26,10 +26,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import { X, Download, Eye, Trash2, Loader2, Filter } from "lucide-react";
+import { X, Download, Eye, Trash2, Filter } from "lucide-react";
 import months from "@/utils/months.ts";
+
+const TABLE_SKELETON_ROWS = 5;
 
 export function InvoiceTable() {
     const queryClient = useQueryClient();
@@ -70,7 +73,6 @@ export function InvoiceTable() {
 
     const handleYearChange = (year: string) => {
         setTempYear(year);
-        // If switching to current year and selected month is in future, clear it
         if (year === currentYear.toString() && tempMonth) {
             if (parseInt(tempMonth) > currentMonth) {
                 setTempMonth("");
@@ -210,16 +212,6 @@ export function InvoiceTable() {
                 )}
             </div>
 
-            {/* Loading Spinner Overlay */}
-            {isFetching && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">Loading invoices...</p>
-                    </div>
-                </div>
-            )}
-
             {/* Desktop Table */}
             <div className="hidden lg:block rounded-xl border overflow-hidden relative">
                 <Table>
@@ -236,7 +228,24 @@ export function InvoiceTable() {
                     </TableHeader>
 
                     <TableBody>
-                        {data?.data?.length ? (
+                        {isFetching ? (
+                            // Skeleton Rows for Desktop
+                            Array.from({ length: TABLE_SKELETON_ROWS }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        <Skeleton className="h-8 w-20 inline-block" />
+                                        <Skeleton className="h-8 w-24 inline-block" />
+                                        <Skeleton className="h-8 w-20 inline-block" />
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : data?.data?.length ? (
                             data.data.map((invoice) => (
                                 <TableRow key={invoice.id}>
                                     <TableCell>{invoice.invoiceNumber}</TableCell>
@@ -302,7 +311,32 @@ export function InvoiceTable() {
 
             {/* Mobile/Tablet Cards */}
             <div className="lg:hidden space-y-3 sm:space-y-4">
-                {data?.data?.length ? (
+                {isFetching ? (
+                    // Skeleton Cards for Mobile
+                    Array.from({ length: TABLE_SKELETON_ROWS }).map((_, i) => (
+                        <div key={i} className="rounded-lg border bg-card p-4 space-y-3">
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-3 w-20" />
+                                    <Skeleton className="h-4 w-32" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-3 w-16 ml-auto" />
+                                    <Skeleton className="h-4 w-20 ml-auto" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 pt-2">
+                                <Skeleton className="h-8 w-full" />
+                                <Skeleton className="h-8 w-full" />
+                            </div>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                                <Skeleton className="h-8 flex-1" />
+                                <Skeleton className="h-8 flex-1" />
+                                <Skeleton className="h-8 w-full" />
+                            </div>
+                        </div>
+                    ))
+                ) : data?.data?.length ? (
                     data.data.map((invoice) => (
                         <div
                             key={invoice.id}
