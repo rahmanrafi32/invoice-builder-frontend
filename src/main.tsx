@@ -4,11 +4,13 @@ import {queryClient} from "./lib/query-client";
 import {ThemeProvider} from "next-themes";
 import App from "./App";
 import "./index.css";
+import { Analytics } from "@vercel/analytics/react";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <ThemeProvider attribute="class" defaultTheme="system">
         <QueryClientProvider client={queryClient}>
             <App/>
+            <Analytics />
         </QueryClientProvider>
     </ThemeProvider>
 );
