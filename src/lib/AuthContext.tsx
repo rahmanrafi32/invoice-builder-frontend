@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.log("Token refreshed successfully");
                 }
             }
-        }, 60000); // Check every minute
+        }, 60000);
 
 
         return () => {

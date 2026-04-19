@@ -72,9 +72,7 @@ export function Login() {
 
         try {
             const response = await loginUser(formData);
-            console.log("Login successful:", response);
 
-            // Store auth data
             storeAuthData(response);
 
             toast.success("Login successful!");
@@ -92,7 +90,7 @@ export function Login() {
             <div className="w-full max-w-md">
                 {/* Branding Section */}
                 <div className="text-center space-y-3 mb-8">
-                    <h2 className="text-4xl font-bold tracking-tight">Welcome Back</h2>
+                    <h2 className="text-4xl font-bold tracking-tight">Sign In to Your Account</h2>
                     <p className="text-muted-foreground text-base">
                         Access your Invoice Builder account to manage your professional invoicing and payments
                     </p>

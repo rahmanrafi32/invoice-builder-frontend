@@ -125,7 +125,6 @@ export function InvoiceTable() {
             const res = await api.get("/invoices", {
                 params: { page, limit, clientId: appliedClientId || undefined, month },
             });
-            console.log("API Response:", res.data);
             return res.data;
         },
         placeholderData: (prev) => prev,
@@ -298,19 +297,13 @@ export function InvoiceTable() {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => {
-                                                console.log("Preview URL:", invoice.pdfPreviewUrl);
-                                                setPreviewUrl(invoice.pdfPreviewUrl)
-                                            }}
+                                            onClick={() => setPreviewUrl(invoice.pdfPreviewUrl)}
                                         >
                                             Preview
                                         </Button>
                                         <Button
                                             size="sm"
-                                            onClick={() => {
-                                                console.log("Download URL:", invoice.pdfDownloadUrl);
-                                                window.open(invoice.pdfDownloadUrl, "_blank");
-                                            }}
+                                            onClick={() => window.open(invoice.pdfDownloadUrl, "_blank")}
                                         >
                                             Download
                                         </Button>
