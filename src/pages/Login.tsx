@@ -51,7 +51,6 @@ export function Login() {
             ...prev,
             [name]: value,
         }));
-        // Clear error for this field when user starts typing
         if (errors[name as keyof FormErrors]) {
             setErrors((prev) => {
                 const newErrors = {...prev};
@@ -73,6 +72,7 @@ export function Login() {
 
         try {
             const response = await loginUser(formData);
+            console.log("Login successful:", response);
 
             // Store auth data
             storeAuthData(response);

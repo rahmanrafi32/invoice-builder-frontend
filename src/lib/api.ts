@@ -115,6 +115,13 @@ api.interceptors.response.use(
                 });
             }
 
+            // Don't refresh token for login/register/refresh endpoints
+            if (originalRequest.url?.includes("/auth/login") ||
+                originalRequest.url?.includes("/auth/register") ||
+                originalRequest.url?.includes("/auth/refresh")) {
+                return Promise.reject(error);
+            }
+
             originalRequest._retry = true;
             isRefreshing = true;
 

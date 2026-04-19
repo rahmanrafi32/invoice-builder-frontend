@@ -77,7 +77,6 @@ export function Register() {
         const newErrors: FormErrors = {};
 
         if (step === 1) {
-            // Account Information validation
             if (!formData.email.trim()) {
                 newErrors.email = "Email is required";
             } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -112,45 +111,22 @@ export function Register() {
         }
 
         if (step === 2) {
-            // Business Information validation
-            if (!formData.senderPhone.trim()) {
-                newErrors.senderPhone = "Business phone is required";
-            }
-            if (!formData.senderAddress.trim()) {
-                newErrors.senderAddress = "Address is required";
-            }
-            if (!formData.senderCity.trim()) {
-                newErrors.senderCity = "City is required";
-            }
-            if (!formData.senderCountry.trim()) {
-                newErrors.senderCountry = "Country is required";
-            }
+            if (!formData.senderPhone.trim()) newErrors.senderPhone = "Business phone is required";
+            if (!formData.senderAddress.trim()) newErrors.senderAddress = "Address is required";
+            if (!formData.senderCity.trim()) newErrors.senderCity = "City is required";
+            if (!formData.senderCountry.trim()) newErrors.senderCountry = "Country is required";
         }
 
         if (step === 3) {
-            // Bank Information validation
-            if (!formData.bankName.trim()) {
-                newErrors.bankName = "Bank name is required";
-            }
-            if (!formData.accountNumber.trim()) {
-                newErrors.accountNumber = "Account number is required";
-            }
-            if (!formData.accountHolderName.trim()) {
-                newErrors.accountHolderName = "Account holder name is required";
-            }
-            if (!formData.branchName.trim()) {
-                newErrors.branchName = "Branch name is required";
-            }
+            if (!formData.bankName.trim()) newErrors.bankName = "Bank name is required";
+            if (!formData.accountNumber.trim()) newErrors.accountNumber = "Account number is required";
+            if (!formData.accountHolderName.trim()) newErrors.accountHolderName = "Account holder name is required";
+            if (!formData.branchName.trim()) newErrors.branchName = "Branch name is required";
         }
 
         if (step === 4) {
-            // Invoice Settings validation
-            if (!formData.invoicePrefix.trim()) {
-                newErrors.invoicePrefix = "Invoice prefix is required";
-            }
-            if (!formData.defaultCurrency.trim()) {
-                newErrors.defaultCurrency = "Default currency is required";
-            }
+            if (!formData.invoicePrefix?.trim()) newErrors.invoicePrefix = "Invoice prefix is required";
+            if (!formData.defaultCurrency?.trim()) newErrors.defaultCurrency = "Default currency is required";
             if (!formData.defaultPaymentTermsDays || formData.defaultPaymentTermsDays <= 0) {
                 newErrors.defaultPaymentTermsDays = "Payment terms must be greater than 0";
             }
@@ -166,21 +142,13 @@ export function Register() {
         setFormData((prev) => {
             const updated = {
                 ...prev,
-                [name]: name === "defaultPaymentTermsDays" ? parseInt(value) || 0 : value,
+                [name]: name === "defaultPaymentTermsDays" ? (value ? parseInt(value) : 0) : value,
             };
-
-            // Auto-populate sender fields from account fields
-            if (name === "name") {
-                updated.senderName = value;
-            }
-            if (name === "email") {
-                updated.senderEmail = value;
-            }
-
+            if (name === "name") updated.senderName = value;
+            if (name === "email") updated.senderEmail = value;
             return updated;
         });
 
-        // Clear error for this field when user starts typing
         if (errors[name]) {
             setErrors((prev) => {
                 const newErrors = { ...prev };
@@ -192,25 +160,19 @@ export function Register() {
 
     const handleNext = () => {
         if (validateStep(currentStep)) {
-            if (currentStep < STEPS.length) {
-                setCurrentStep(currentStep + 1);
-                window.scrollTo(0, 0);
-            }
+            setCurrentStep((s) => s + 1);
+            window.scrollTo(0, 0);
         } else {
             toast.error("Please fix the errors in this step");
         }
     };
 
     const handlePrevious = () => {
-        if (currentStep > 1) {
-            setCurrentStep(currentStep - 1);
-            window.scrollTo(0, 0);
-        }
+        setCurrentStep((s) => s - 1);
+        window.scrollTo(0, 0);
     };
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
+    const handleRegister = async () => {
         if (!validateStep(4)) {
             toast.error("Please fix the errors in this step");
             return;
@@ -222,15 +184,11 @@ export function Register() {
             const registrationData = { ...formData };
             delete (registrationData as Partial<FormData>).confirmPassword;
             const response = await registerUser(registrationData);
-
-            // Store auth data
             storeAuthData(response);
-
             toast.success("Registration successful! Logging you in...");
             navigate("/");
         } catch (error: unknown) {
             console.error("Registration error:", error);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -267,7 +225,7 @@ export function Register() {
                 </div>
 
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-6">
                         {/* Step 1: Account Information */}
                         {currentStep === 1 && (
                             <div className="space-y-4">
@@ -282,9 +240,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.email}
                                     />
-                                    {errors.email && (
-                                        <p className="text-sm text-destructive">{errors.email}</p>
-                                    )}
+                                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -298,9 +254,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.name}
                                     />
-                                    {errors.name && (
-                                        <p className="text-sm text-destructive">{errors.name}</p>
-                                    )}
+                                    {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -314,12 +268,8 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.password}
                                     />
-                                    {errors.password && (
-                                        <p className="text-sm text-destructive">{errors.password}</p>
-                                    )}
-                                    {formData.password && (
-                                        <PasswordRequirements password={formData.password} />
-                                    )}
+                                    {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                                    {formData.password && <PasswordRequirements password={formData.password} />}
                                 </div>
 
                                 <div className="space-y-2">
@@ -333,11 +283,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.confirmPassword}
                                     />
-                                    {errors.confirmPassword && (
-                                        <p className="text-sm text-destructive">
-                                            {errors.confirmPassword}
-                                        </p>
-                                    )}
+                                    {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
                                 </div>
                             </div>
                         )}
@@ -356,9 +302,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.senderPhone}
                                     />
-                                    {errors.senderPhone && (
-                                        <p className="text-sm text-destructive">{errors.senderPhone}</p>
-                                    )}
+                                    {errors.senderPhone && <p className="text-sm text-destructive">{errors.senderPhone}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -370,11 +314,7 @@ export function Register() {
                                         placeholder="12-3456789"
                                         value={formData.senderTaxId}
                                         onChange={handleChange}
-                                        aria-invalid={!!errors.senderTaxId}
                                     />
-                                    {errors.senderTaxId && (
-                                        <p className="text-sm text-destructive">{errors.senderTaxId}</p>
-                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -388,9 +328,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.senderAddress}
                                     />
-                                    {errors.senderAddress && (
-                                        <p className="text-sm text-destructive">{errors.senderAddress}</p>
-                                    )}
+                                    {errors.senderAddress && <p className="text-sm text-destructive">{errors.senderAddress}</p>}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -405,11 +343,8 @@ export function Register() {
                                             onChange={handleChange}
                                             aria-invalid={!!errors.senderCity}
                                         />
-                                        {errors.senderCity && (
-                                            <p className="text-sm text-destructive">{errors.senderCity}</p>
-                                        )}
+                                        {errors.senderCity && <p className="text-sm text-destructive">{errors.senderCity}</p>}
                                     </div>
-
                                     <div className="space-y-2">
                                         <Label htmlFor="senderCountry">Country *</Label>
                                         <Input
@@ -421,9 +356,7 @@ export function Register() {
                                             onChange={handleChange}
                                             aria-invalid={!!errors.senderCountry}
                                         />
-                                        {errors.senderCountry && (
-                                            <p className="text-sm text-destructive">{errors.senderCountry}</p>
-                                        )}
+                                        {errors.senderCountry && <p className="text-sm text-destructive">{errors.senderCountry}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -444,11 +377,8 @@ export function Register() {
                                             onChange={handleChange}
                                             aria-invalid={!!errors.bankName}
                                         />
-                                        {errors.bankName && (
-                                            <p className="text-sm text-destructive">{errors.bankName}</p>
-                                        )}
+                                        {errors.bankName && <p className="text-sm text-destructive">{errors.bankName}</p>}
                                     </div>
-
                                     <div className="space-y-2">
                                         <Label htmlFor="branchName">Branch Name *</Label>
                                         <Input
@@ -460,9 +390,7 @@ export function Register() {
                                             onChange={handleChange}
                                             aria-invalid={!!errors.branchName}
                                         />
-                                        {errors.branchName && (
-                                            <p className="text-sm text-destructive">{errors.branchName}</p>
-                                        )}
+                                        {errors.branchName && <p className="text-sm text-destructive">{errors.branchName}</p>}
                                     </div>
                                 </div>
 
@@ -477,9 +405,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.accountNumber}
                                     />
-                                    {errors.accountNumber && (
-                                        <p className="text-sm text-destructive">{errors.accountNumber}</p>
-                                    )}
+                                    {errors.accountNumber && <p className="text-sm text-destructive">{errors.accountNumber}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -493,9 +419,7 @@ export function Register() {
                                         onChange={handleChange}
                                         aria-invalid={!!errors.accountHolderName}
                                     />
-                                    {errors.accountHolderName && (
-                                        <p className="text-sm text-destructive">{errors.accountHolderName}</p>
-                                    )}
+                                    {errors.accountHolderName && <p className="text-sm text-destructive">{errors.accountHolderName}</p>}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -508,13 +432,8 @@ export function Register() {
                                             placeholder="021000021"
                                             value={formData.routingCode}
                                             onChange={handleChange}
-                                            aria-invalid={!!errors.routingCode}
                                         />
-                                        {errors.routingCode && (
-                                            <p className="text-sm text-destructive">{errors.routingCode}</p>
-                                        )}
                                     </div>
-
                                     <div className="space-y-2">
                                         <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
                                         <Input
@@ -524,11 +443,7 @@ export function Register() {
                                             placeholder="CHASUS33"
                                             value={formData.swiftCode}
                                             onChange={handleChange}
-                                            aria-invalid={!!errors.swiftCode}
                                         />
-                                        {errors.swiftCode && (
-                                            <p className="text-sm text-destructive">{errors.swiftCode}</p>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -547,6 +462,7 @@ export function Register() {
                                         value={formData.invoicePrefix}
                                         onChange={handleChange}
                                     />
+                                    {errors.invoicePrefix && <p className="text-sm text-destructive">{errors.invoicePrefix}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -559,12 +475,11 @@ export function Register() {
                                         value={formData.defaultCurrency}
                                         onChange={handleChange}
                                     />
+                                    {errors.defaultCurrency && <p className="text-sm text-destructive">{errors.defaultCurrency}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="defaultPaymentTermsDays">
-                                        Payment Terms (Days) *
-                                    </Label>
+                                    <Label htmlFor="defaultPaymentTermsDays">Payment Terms (Days) *</Label>
                                     <Input
                                         id="defaultPaymentTermsDays"
                                         name="defaultPaymentTermsDays"
@@ -573,6 +488,7 @@ export function Register() {
                                         value={formData.defaultPaymentTermsDays}
                                         onChange={handleChange}
                                     />
+                                    {errors.defaultPaymentTermsDays && <p className="text-sm text-destructive">{errors.defaultPaymentTermsDays}</p>}
                                 </div>
 
                                 <p className="text-sm text-muted-foreground pt-4">
@@ -598,17 +514,14 @@ export function Register() {
                             </Button>
 
                             {currentStep < STEPS.length ? (
-                                <Button
-                                    type="button"
-                                    onClick={handleNext}
-                                    className="ml-auto gap-2"
-                                >
+                                <Button type="button" onClick={handleNext} className="ml-auto gap-2">
                                     Next
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>
                             ) : (
                                 <Button
-                                    type="submit"
+                                    type="button"
+                                    onClick={handleRegister}
                                     disabled={isLoading}
                                     className="ml-auto gap-2"
                                 >
@@ -623,13 +536,9 @@ export function Register() {
                                 </Button>
                             )}
                         </div>
-                    </form>
+                    </div>
                 </CardContent>
             </Card>
         </div>
     );
 }
-
-
-
-
