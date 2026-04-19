@@ -1,6 +1,10 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 
+interface ApiErrorData {
+    message?: string;
+}
+
 const baseURL = import.meta.env.VITE_API_URL;
 
 console.log(baseURL);
@@ -131,8 +135,9 @@ api.interceptors.response.use(
         }
 
         // Handle other error responses
+        const errorData = error.response?.data as ApiErrorData | undefined;
         const message =
-            (error.response?.data as any)?.message ||
+            errorData?.message ||
             error.message ||
             "Something went wrong";
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PasswordRequirements } from "@/components/PasswordRequirements";
 import { registerUser, storeAuthData } from "@/lib/auth";
 import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
@@ -124,9 +125,6 @@ export function Register() {
             if (!formData.senderCountry.trim()) {
                 newErrors.senderCountry = "Country is required";
             }
-            if (!formData.senderTaxId.trim()) {
-                newErrors.senderTaxId = "Tax ID is required";
-            }
         }
 
         if (step === 3) {
@@ -140,14 +138,21 @@ export function Register() {
             if (!formData.accountHolderName.trim()) {
                 newErrors.accountHolderName = "Account holder name is required";
             }
-            if (!formData.routingCode.trim()) {
-                newErrors.routingCode = "Routing code is required";
-            }
-            if (!formData.swiftCode.trim()) {
-                newErrors.swiftCode = "SWIFT code is required";
-            }
             if (!formData.branchName.trim()) {
                 newErrors.branchName = "Branch name is required";
+            }
+        }
+
+        if (step === 4) {
+            // Invoice Settings validation
+            if (!formData.invoicePrefix.trim()) {
+                newErrors.invoicePrefix = "Invoice prefix is required";
+            }
+            if (!formData.defaultCurrency.trim()) {
+                newErrors.defaultCurrency = "Default currency is required";
+            }
+            if (!formData.defaultPaymentTermsDays || formData.defaultPaymentTermsDays <= 0) {
+                newErrors.defaultPaymentTermsDays = "Payment terms must be greater than 0";
             }
         }
 
@@ -312,6 +317,9 @@ export function Register() {
                                     {errors.password && (
                                         <p className="text-sm text-destructive">{errors.password}</p>
                                     )}
+                                    {formData.password && (
+                                        <PasswordRequirements password={formData.password} />
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -354,7 +362,7 @@ export function Register() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="senderTaxId">Tax ID *</Label>
+                                    <Label htmlFor="senderTaxId">Tax ID</Label>
                                     <Input
                                         id="senderTaxId"
                                         name="senderTaxId"
@@ -492,7 +500,7 @@ export function Register() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="routingCode">Routing Code *</Label>
+                                        <Label htmlFor="routingCode">Routing Code (Optional)</Label>
                                         <Input
                                             id="routingCode"
                                             name="routingCode"
@@ -508,7 +516,7 @@ export function Register() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="swiftCode">SWIFT Code *</Label>
+                                        <Label htmlFor="swiftCode">SWIFT Code (Optional)</Label>
                                         <Input
                                             id="swiftCode"
                                             name="swiftCode"

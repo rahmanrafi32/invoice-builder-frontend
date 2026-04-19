@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { InvoiceResponse } from "@/types/invoice";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -34,16 +33,22 @@ import months from "@/utils/months.ts";
 
 const TABLE_SKELETON_ROWS = 5;
 
+interface Client {
+    id: string;
+    name: string;
+    email: string;
+}
+
 export function InvoiceTable() {
     const queryClient = useQueryClient();
 
     const [page, setPage] = useState(1);
-    const [searchInput, setSearchInput] = useState("");
-    const [search, setSearch] = useState("");
+    const [selectedClientId, setSelectedClientId] = useState<string>("");
     const [tempMonth, setTempMonth] = useState<string>("");
     const [tempYear, setTempYear] = useState<string>("");
     const [appliedMonth, setAppliedMonth] = useState<string>("");
     const [appliedYear, setAppliedYear] = useState<string>("");
+    const [appliedClientId, setAppliedClientId] = useState<string>("");
 
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -62,14 +67,24 @@ export function InvoiceTable() {
         ? months.filter((m) => parseInt(m.value) <= currentMonth)
         : months;
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setPage(1);
-            setSearch(searchInput);
-        }, 400);
-
-        return () => clearTimeout(timer);
-    }, [searchInput]);
+    // Fetch clients
+    const { data: clientsData, isLoading: clientsLoading } = useQuery<Client[]>({
+        queryKey: ["clients"],
+        queryFn: async () => {
+            try {
+                const response = await api.get<Client[] | { data: Client[] }>("/clients");
+                if (Array.isArray(response.data)) {
+                    return response.data;
+                } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+                    return (response.data as { data: Client[] }).data;
+                }
+                return [];
+            } catch (error) {
+                console.error("Failed to fetch clients:", error);
+                return [];
+            }
+        },
+    });
 
     const handleYearChange = (year: string) => {
         setTempYear(year);
@@ -87,27 +102,28 @@ export function InvoiceTable() {
     const handleApplyFilter = () => {
         setAppliedMonth(tempMonth);
         setAppliedYear(tempYear);
+        setAppliedClientId(selectedClientId);
         setPage(1);
     };
 
     const handleReset = () => {
-        setSearchInput("");
-        setSearch("");
+        setSelectedClientId("");
         setTempMonth("");
         setTempYear("");
         setAppliedMonth("");
         setAppliedYear("");
+        setAppliedClientId("");
         setPage(1);
     };
 
-    const hasActiveFilters = searchInput !== "" || appliedMonth !== "" || appliedYear !== "";
-    const canApplyFilter = tempYear !== "" && (tempMonth !== appliedMonth || tempYear !== appliedYear);
+    const hasActiveFilters = selectedClientId !== "" || appliedMonth !== "" || appliedYear !== "";
+    const canApplyFilter = tempYear !== "" && (tempMonth !== appliedMonth || tempYear !== appliedYear || selectedClientId !== appliedClientId);
 
     const { data, isFetching } = useQuery<InvoiceResponse>({
-        queryKey: ["invoices", page, search, month],
+        queryKey: ["invoices", page, appliedClientId, month],
         queryFn: async () => {
             const res = await api.get("/invoices", {
-                params: { page, limit, search, month },
+                params: { page, limit, clientId: appliedClientId || undefined, month },
             });
             console.log("API Response:", res.data);
             return res.data;
@@ -141,12 +157,18 @@ export function InvoiceTable() {
             {/* Filters */}
             <div className="flex flex-col gap-3">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                    <Input
-                        placeholder="Search by client..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        className="flex-1 text-sm sm:text-base"
-                    />
+                    <Select value={selectedClientId} onValueChange={setSelectedClientId} disabled={clientsLoading}>
+                        <SelectTrigger className="flex-1 text-sm sm:text-base">
+                            <SelectValue placeholder={clientsLoading ? "Loading clients..." : "Select client"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {(clientsData || []).map((client) => (
+                                <SelectItem key={client.id} value={client.id}>
+                                    {client.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
                     <Select value={tempYear} onValueChange={handleYearChange}>
                         <SelectTrigger className="w-full sm:w-40">
@@ -200,14 +222,21 @@ export function InvoiceTable() {
                 </div>
 
                 {/* Active Filter Badge */}
-                {(appliedMonth || appliedYear) && (
+                {(appliedMonth || appliedYear || appliedClientId) && (
                     <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                         <span>Filtered by:</span>
-                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-md">
-                            {appliedYear && appliedMonth
-                                ? `${months.find(m => m.value === appliedMonth)?.label} ${appliedYear}`
-                                : appliedYear}
-                        </span>
+                        <div className="flex flex-wrap gap-2">
+                            {appliedClientId && (
+                                <span className="px-2 py-1 bg-primary/10 text-primary rounded-md">
+                                    {clientsData?.find(c => c.id === appliedClientId)?.name}
+                                </span>
+                            )}
+                            {appliedYear && appliedMonth && (
+                                <span className="px-2 py-1 bg-primary/10 text-primary rounded-md">
+                                    {months.find(m => m.value === appliedMonth)?.label} {appliedYear}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

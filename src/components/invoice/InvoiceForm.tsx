@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,12 +34,9 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoadingClients, setIsLoadingClients] = useState(false);
     const queryClient = useQueryClient();
+    const hasInitialized = useRef(false);
 
-    useEffect(() => {
-        fetchClients();
-    }, []);
-
-    const fetchClients = async () => {
+    const fetchClients = useCallback(async () => {
         try {
             setIsLoadingClients(true);
             const response = await api.get<Client[] | { data: Client[] }>("/clients");
@@ -58,7 +55,14 @@ export function InvoiceForm({ onSuccess }: InvoiceFormProps) {
         } finally {
             setIsLoadingClients(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            fetchClients();
+        }
+    }, [fetchClients]);
 
     const isValid = selectedDate !== undefined && Number(amount) > 0 && selectedClient !== "";
 

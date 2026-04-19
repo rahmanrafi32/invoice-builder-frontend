@@ -3,6 +3,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Skeleton} from "@/components/ui/skeleton";
 import {api} from "@/lib/api";
 import {toast} from "sonner";
 import {Edit2, Loader2, Save, X} from "lucide-react";
@@ -55,6 +56,29 @@ export function Profile() {
     const [isSaving, setIsSaving] = useState(false);
     const [errors, setErrors] = useState<FormErrors>({});
 
+    const initializeEditForm = (data: UserProfile) => {
+        const editableData: EditableUserProfile = {
+            name: data.name,
+            senderName: data.senderName,
+            senderEmail: data.senderEmail,
+            senderPhone: data.senderPhone,
+            senderAddress: data.senderAddress,
+            senderCity: data.senderCity,
+            senderCountry: data.senderCountry,
+            senderTaxId: data.senderTaxId,
+            bankName: data.bankName,
+            accountNumber: data.accountNumber,
+            accountHolderName: data.accountHolderName,
+            routingCode: data.routingCode,
+            swiftCode: data.swiftCode,
+            branchName: data.branchName,
+            invoicePrefix: data.invoicePrefix,
+            defaultCurrency: data.defaultCurrency,
+            defaultPaymentTermsDays: data.defaultPaymentTermsDays,
+        };
+        setEditProfile(editableData);
+    };
+
     useEffect(() => {
         const initLoad = async () => {
             try {
@@ -86,11 +110,6 @@ export function Profile() {
         }
     };
 
-    const initializeEditForm = (data: UserProfile) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {id, email, isActive, createdAt, updatedAt, ...editableData} = data;
-        setEditProfile(editableData);
-    };
 
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
@@ -197,10 +216,77 @@ export function Profile() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary"/>
-                    <p className="text-muted-foreground">Loading profile...</p>
+            <div className="min-h-screen bg-background">
+                {/* Header Skeleton */}
+                <div>
+                    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 space-y-3">
+                                <Skeleton className="h-8 w-64"/>
+                                <Skeleton className="h-4 w-96"/>
+                            </div>
+                            <Skeleton className="h-10 w-32"/>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Skeleton */}
+                <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+                    {/* Personal Information Skeleton */}
+                    <Card className="border-border/50">
+                        <CardHeader className="pb-4">
+                            <Skeleton className="h-6 w-48 mb-2"/>
+                            <Skeleton className="h-4 w-64"/>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-32"/>
+                                    <Skeleton className="h-10 w-full"/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-32"/>
+                                    <Skeleton className="h-10 w-full"/>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Sender Information Skeleton */}
+                    <Card className="border-border/50">
+                        <CardHeader className="pb-4">
+                            <Skeleton className="h-6 w-48 mb-2"/>
+                            <Skeleton className="h-4 w-64"/>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <Skeleton className="h-4 w-32"/>
+                                        <Skeleton className="h-10 w-full"/>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Bank Information Skeleton */}
+                    <Card className="border-border/50">
+                        <CardHeader className="pb-4">
+                            <Skeleton className="h-6 w-48 mb-2"/>
+                            <Skeleton className="h-4 w-64"/>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <Skeleton className="h-4 w-32"/>
+                                        <Skeleton className="h-10 w-full"/>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         );
@@ -302,13 +388,21 @@ export function Profile() {
                                 {/* Email (Read-only) */}
                                 <div className="space-y-2">
                                     <Label>Email Address</Label>
-                                    <div
-                                        className="px-3 py-2 border border-input rounded-md bg-muted text-muted-foreground">
-                                        {profile.email}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Email cannot be changed
-                                    </p>
+                                    {isEditing ? (
+                                        <div className="px-3 py-2 border border-input rounded-md bg-muted text-muted-foreground">
+                                            {profile.email}
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="px-3 py-2 border border-input rounded-md bg-muted text-muted-foreground">
+                                            {profile.email}
+                                        </div>
+                                    )}
+                                    {isEditing && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Please contact with admin to change the email
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Name */}

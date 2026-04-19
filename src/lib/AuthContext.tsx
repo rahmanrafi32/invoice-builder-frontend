@@ -1,5 +1,6 @@
-import { createContext, useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { isAuthenticated, getCurrentUser, isTokenExpiringSoon, refreshToken } from "@/lib/auth";
+import { AuthContext } from "@/lib/contexts/AuthContextType";
 
 interface User {
     id: string;
@@ -25,14 +26,6 @@ interface User {
     createdAt: string;
     updatedAt: string;
 }
-
-export interface AuthContextType {
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);

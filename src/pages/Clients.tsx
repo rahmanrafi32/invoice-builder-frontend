@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useState, useCallback, useRef} from "react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
@@ -58,12 +58,10 @@ export function Clients() {
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState<FormErrors>({});
+    const hasInitialized = useRef(false);
 
-    useEffect(() => {
-        fetchClients();
-    }, []);
 
-    const fetchClients = async () => {
+    const fetchClients = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await api.get<Client[] | { data: Client[] }>("/clients");
@@ -84,7 +82,14 @@ export function Clients() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            fetchClients();
+        }
+    }, [fetchClients]);
 
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};

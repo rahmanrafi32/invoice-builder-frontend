@@ -17,29 +17,18 @@ import {
     DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { InvoiceForm } from "@/components/invoice/InvoiceForm";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { logoutUser, getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-interface UserInfo {
-    name?: string;
-    email: string;
-}
 
 export function Navbar() {
     const { theme, setTheme } = useTheme();
     const [open, setOpen] = useState(false);
-    const [user, setUser] = useState<UserInfo | null>(null);
+    const user = getCurrentUser();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        // Fetch current user info from localStorage
-        const currentUser = getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-        }
-    }, []);
 
     const handleLogout = async () => {
         await logoutUser();
